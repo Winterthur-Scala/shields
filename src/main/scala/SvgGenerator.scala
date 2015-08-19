@@ -2,6 +2,9 @@ import java.awt.Font
 import java.awt.font.FontRenderContext
 
 object SvgGenerator {
+  /**
+   * Generate svg based on several parameters.
+   */
   def generate(subject: String, status: String, color: Option[String] = Option.empty): String = {
     val subjectWidth = calcStringWidth(subject)
     val statusWidth = calcStringWidth(status)
@@ -11,6 +14,11 @@ object SvgGenerator {
     val logoWidth = 0
     val logoPadding = 0
 
+    /**
+     * Scala string interpolation is used to turn a template into proper svg.
+     *
+     * More about string interpolation: http://docs.scala-lang.org/overviews/core/string-interpolation.html
+     */
     s"""<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${subjectWidth+statusWidth}" height="20">
       |  <linearGradient id="smooth" x2="0" y2="100%">
       |    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
