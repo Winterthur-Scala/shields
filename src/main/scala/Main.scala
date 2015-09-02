@@ -1,4 +1,4 @@
-import akka.actor.ActorSystem
+import akka.actor.{Props, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers
@@ -16,8 +16,10 @@ object Main extends App {
   implicit val materializer = ActorMaterializer()
   implicit val marshaller = PredefinedToEntityMarshallers.stringMarshaller(`text/html`)
 
+  val svgGeneratorActor = system.actorOf(Props[SvgGeneratorActor], name = "SvgGeneratorActor")
+
   /**
    * Start the server with the above route definition.
    */
-  Http().bindAndHandle(ShieldsRestActor(system, materializer).shields, "localhost", 8080)
+  Http().bindAndHandle(ShieldsRestActor(system, materializer, svgGeneratorActor).shields, "localhost", 8080)
 }

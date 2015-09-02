@@ -1,5 +1,8 @@
+import java.util.concurrent.TimeUnit
+
 import akka.actor.Actor.Receive
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{ActorRef, Actor, ActorSystem}
+import akka.pattern.ask
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers
@@ -7,12 +10,17 @@ import akka.http.scaladsl.model.MediaTypes._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import akka.util.Timeout
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 
 trait ShieldsRestService {
   def system: ActorSystem
 
   def materializer: ActorMaterializer
+
+  def svgGeneratorActor: ActorRef
 
   def marshaller = PredefinedToEntityMarshallers.stringMarshaller(`text/html`)
 
@@ -67,7 +75,10 @@ trait ShieldsRestService {
              * The _ is used for values that we don't care about. When the regex didn't match, just simple text is returned.
              */
             badgeDefinition match {
-              case pathRegex(subject, status, color) => SvgGenerator.generate(subject, status, Option(color))
+              case pathRegex(subject, status, color) =>
+                implicit val timeout = Timeout(30, TimeUnit.SECONDS)
+                val createdShield = svgGeneratorActor ? CreateShield(subject, status, Option(color))
+                createdShield.mapTo[CreatedShield].map(_.svg)
               case _ => "Nothing"
             }
           }
@@ -76,4 +87,4 @@ trait ShieldsRestService {
   }
 }
 
-case class ShieldsRestActor(system: ActorSystem, materializer: ActorMaterializer) extends ShieldsRestService
+case class ShieldsRestActor(system: ActorSystem, materializer: ActorMaterializer, svgGeneratorActor: ActorRef) extends ShieldsRestService
