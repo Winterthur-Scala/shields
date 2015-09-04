@@ -1,6 +1,18 @@
 import java.awt.Font
 import java.awt.font.FontRenderContext
 
+import akka.actor.Actor
+import akka.actor.Actor.Receive
+
+case class CreateShield(subject: String, status: String, color: Option[String] = Option.empty)
+case class CreatedShield(svg: String)
+
+class SvgGeneratorActor extends Actor {
+  override def receive: Receive = {
+    case CreateShield(subject, status, color) => sender ! CreatedShield(SvgGenerator.generate(subject, status, color))
+  }
+}
+
 object SvgGenerator {
   /**
    * Generate svg based on several parameters.
