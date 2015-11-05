@@ -17,9 +17,10 @@ object Main extends App {
   implicit val marshaller = PredefinedToEntityMarshallers.stringMarshaller(`text/html`)
 
   val svgGeneratorActor = system.actorOf(Props[SvgGeneratorActor], name = "SvgGeneratorActor")
+  val jenkinsStatusActor = system.actorOf(Props[JenkinsStatusActor], name = "JenkinsStatusActor")
 
   /**
    * Start the server with the above route definition.
    */
-  Http().bindAndHandle(ShieldsRestActor(system, materializer, svgGeneratorActor).shields, "localhost", 8080)
+  Http().bindAndHandle(ShieldsRestActor(system, materializer, svgGeneratorActor, jenkinsStatusActor).shields, "localhost", 8080)
 }

@@ -1,7 +1,6 @@
 import java.util.concurrent.TimeUnit
 
-import akka.actor.Actor.Receive
-import akka.actor.{ActorRef, Actor, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
@@ -14,13 +13,14 @@ import akka.util.Timeout
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-
 trait ShieldsRestService {
   def system: ActorSystem
 
   def materializer: ActorMaterializer
 
   def svgGeneratorActor: ActorRef
+
+  def jenkinsStatusActor: ActorRef
 
   def marshaller = PredefinedToEntityMarshallers.stringMarshaller(`text/html`)
 
@@ -82,9 +82,16 @@ trait ShieldsRestService {
               case _ => "Nothing"
             }
           }
+        } ~
+        path("jenkins" / "s" / Segment / Segment / Segment) {
+          (protocol, domain, job) => complete {
+            implicit val timeout = Timeout(30, TimeUnit.SECONDS)
+            val createdShield = jenkinsStatusActor ? CreateShieldForJenkinsJob(protocol, domain, job)
+            createdShield.mapTo[CreatedShield].map(_.svg)
+          }
         }
     }
   }
 }
 
-case class ShieldsRestActor(system: ActorSystem, materializer: ActorMaterializer, svgGeneratorActor: ActorRef) extends ShieldsRestService
+case class ShieldsRestActor(system: ActorSystem, materializer: ActorMaterializer, svgGeneratorActor: ActorRef, jenkinsStatusActor: ActorRef) extends ShieldsRestService
